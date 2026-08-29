@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下坝村茄子基地 - 专属气象站</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 15px; }
+        h1 { font-size: 22px; text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .alert { background: #ffebee; color: #c62828; border-left: 6px solid #c62828; }
+        .safe { background: #e8f5e9; color: #2e7d32; border-left: 6px solid #2e7d32; }
+        .big-text { font-size: 26px; font-weight: bold; margin: 10px 0; line-height: 1.4; }
+        .label { font-size: 15px; color: #7f8c8d; font-weight: bold; }
+        .hour-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 18px;}
+        .hour-row:last-child { border-bottom: none; }
+        .rain-heavy { color: #d35400; font-weight: bold; }
+        .rain-light { color: #2980b9; }
+        #update-time { text-align: center; font-size: 13px; color: #999; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🍆 下坝村茄子基地 - 气象站</h1>
+    <div id="radar-card" class="card">
+        <div class="label">未来两小时降雨雷达</div>
+        <div id="radar-text" class="big-text">数据加载中...</div>
+    </div>
+    <div class="card">
+        <div class="label">地里现在的实况</div>
+        <div id="now-temp" class="big-text">--℃</div>
+        <div id="now-desc">湿度: --% | 能见度: --公里</div>
+    </div>
+    <div class="card">
+        <div class="label">今天几点会下雨？(未来12小时)</div>
+        <div id="hourly-list">加载中...</div>
+    </div>
+    <div id="update-time"></div>
+    <script>
+        const LOCATION = '99.0280,23.5335'; 
+        const API_KEY='0a45d5c423b94d15852ba9578e98c694'; 
+        const HOST = 'https://q45u9xuvxe.re.qweatherapi.com/v7';
+
+        async function fetchData() {
+            try {
+                const minRes = await fetch(`${HOST}/minutely/5m?location=${LOCATION}&key=${API_KEY}`);
+                const minData = await minRes.json();
+                const radarCard = document.getElementById('radar-card');
+                const radarText = document.getElementById('radar-text');
+                if (minData.code === '200') {
+                    radarText.innerText = minData.summary;
+                    if (minData.summary.includes('无降水') || minData.summary.includes('不会下雨')) {
+                        radarCard.className = 'card safe';
+                    } else {
+                        radarCard.className = 'card alert';
+                    }
+                }
+
+                const nowRes = await fetch(`${HOST}/weather/now?location=${LOCATION}&key=${API_KEY}`);
+                const nowData = await nowRes.json();
+                if (nowData.code === '200') {
+                    document.getElementById('now-temp').innerText = `${nowData.now.temp}℃ (${nowData.now.text})`;
+                    document.getElementById('now-desc').innerText = `相对湿度: ${nowData.now.humidity}% | 能见度: ${nowData.now.vis}公里`;
+                }
+
+                const hrRes = await fetch(`${HOST}/weather/24h?location=${LOCATION}&key=${API_KEY}`);
+                const hrData = await hrRes.json();
+                if (hrData.code === '200') {
+                    let html = '';
+                    hrData.hourly.slice(0, 12).forEach(item => {
+                        const time = item.fxTime.substring(11, 16);
+                        const precip = parseFloat(item.precip);
+                        let rainClass = '';
+                        let rainText = '无雨';
+                        if (precip > 2.0) { rainClass = 'rain-heavy'; rainText = `${precip}毫米 (大雨!)`; }
+                        else if (precip > 0) { rainClass = 'rain-light'; rainText = `${precip}毫米 (小雨)`; }
+                        
+                        html += `
+                            <div class="hour-row ${rainClass}">
+                                <span>${time} ${item.text}</span>
+                                <span>${rainText}</span>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('hourly-list').innerHTML = html;
+                }
+                document.getElementById('update-time').innerText = `数据同步时间: ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                document.getElementById('radar-text').innerText = "数据获取失败，请刷新网页";
+            }
+        }
+        fetchData();
+    </script>
+</body>
+</html>
