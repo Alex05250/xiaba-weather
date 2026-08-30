@@ -6,12 +6,16 @@
     <title>下坝村茄子基地 - 专属气象站</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
-            background-color: #f1f5f9;
+            /* 柔和渐变背景，衬托毛玻璃效果 */
+            background: linear-gradient(145deg, #e0f2fe 0%, #f0fdf4 35%, #f1f5f9 70%, #e2e8f0 100%);
+            background-attachment: fixed;
             color: #0f172a;
             margin: 0;
             padding: 14px;
+            min-height: 100vh;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -30,31 +34,40 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
         }
         .refresh-btn {
-            background: #0284c7;
+            background: rgba(2, 132, 199, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             color: #ffffff;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.4);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
             display: flex;
             align-items: center;
             gap: 4px;
+            transition: all 0.2s ease;
         }
-        .refresh-btn:active { background: #0369a1; transform: scale(0.97); }
+        .refresh-btn:active {
+            background: #0284c7;
+            transform: scale(0.96);
+        }
 
-        /* 卡片容器 */
+        /* 毛玻璃卡片核心样式 */
         .card {
-            background: #ffffff;
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 18px;
             padding: 16px;
             margin-bottom: 14px;
-            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.04);
-            border: 1px solid #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
         }
         .card-header {
             display: flex;
@@ -63,17 +76,23 @@
             font-size: 15px;
             font-weight: 700;
             color: #334155;
-            border-bottom: 1.5px solid #f1f5f9;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
             padding-bottom: 8px;
             margin-bottom: 12px;
         }
 
-        /* 雷达卡片 (纯净展示) */
-        .alert-safe { background: #f0fdf4; border: 2px solid #22c55e; }
+        /* 雷达卡片 (毛玻璃主题状态) */
+        .alert-safe {
+            background: rgba(240, 253, 244, 0.78);
+            border: 1.5px solid rgba(34, 197, 94, 0.6);
+        }
         .alert-safe .radar-title { color: #166534; }
         .alert-safe .radar-summary { color: #15803d; }
         
-        .alert-rain { background: #fef2f2; border: 2px solid #ef4444; }
+        .alert-rain {
+            background: rgba(254, 242, 242, 0.82);
+            border: 1.5px solid rgba(239, 68, 68, 0.6);
+        }
         .alert-rain .radar-title { color: #991b1b; }
         .alert-rain .radar-summary { color: #b91c1c; }
 
@@ -107,9 +126,12 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 8px 14px;
             margin-top: 10px;
-            background: #f8fafc;
+            background: rgba(248, 250, 252, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             padding: 10px 12px;
-            border-radius: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
         .meta-item {
             font-size: 15px;
@@ -133,15 +155,17 @@
             height: 4px;
         }
         .hourly-scroll-wrap::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: rgba(203, 213, 225, 0.8);
             border-radius: 4px;
         }
         .hourly-item {
             flex: 0 0 74px;
             scroll-snap-align: start;
-            background: #f8fafc;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(255, 255, 255, 0.8);
+            border-radius: 14px;
             padding: 10px 6px;
             display: flex;
             flex-direction: column;
@@ -151,18 +175,19 @@
             min-height: 124px;
             cursor: pointer;
             transition: all 0.15s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
         .hourly-item:active {
             transform: scale(0.96);
         }
         .hourly-item.is-rain {
-            background: #f0f9ff;
-            border-color: #7dd3fc;
+            background: rgba(224, 242, 254, 0.65);
+            border-color: rgba(56, 189, 248, 0.6);
         }
         .hourly-item.selected {
             border-color: #0284c7;
-            background: #e0f2fe;
-            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+            background: rgba(186, 230, 253, 0.85);
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.3);
         }
         .hourly-time {
             font-size: 14px;
@@ -195,11 +220,16 @@
 
         /* 选中小时详细说明卡片 (Master-Detail) */
         .hourly-detail-box {
-            background: #f8fafc;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 14px;
             padding: 12px 14px;
             margin-top: 12px;
             border-left: 4px solid #0284c7;
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.8);
             animation: fadeIn 0.2s ease-in-out;
         }
         @keyframes fadeIn {
@@ -222,11 +252,11 @@
             font-weight: 700;
             padding: 2px 8px;
             border-radius: 6px;
-            background: #e2e8f0;
+            background: rgba(226, 232, 240, 0.8);
             color: #475569;
         }
         .detail-badge.rain {
-            background: #bae6fd;
+            background: rgba(186, 230, 253, 0.9);
             color: #0369a1;
         }
         .detail-desc {
@@ -243,7 +273,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 11px 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
         }
         .daily-row:last-child { border-bottom: none; }
         .daily-left-main {
@@ -276,6 +306,7 @@
             font-weight: 600;
             color: #64748b;
             margin: 16px 0 28px;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
         }
     </style>
 </head>
@@ -379,7 +410,7 @@
             if (uv <= 4) return '中等';
             if (uv <= 6) return '较强';
             if (uv <= 9) return '很强';
-            return '极强'; // 消除12级大风误导
+            return '极强';
         }
 
         // 点击胶囊展示雨量体感解释
@@ -444,7 +475,6 @@
             const timeTag = document.getElementById('update-time');
             timeTag.innerText = '正在同步最新气象数据...';
 
-            // 并发请求
             const [minResult, nowResult, hourlyResult, dailyResult] = await Promise.allSettled([
                 fetchEndpoint('/minutely/5m?'),
                 fetchEndpoint('/weather/now?'),
@@ -452,7 +482,7 @@
                 fetchEndpoint('/weather/7d?')
             ]);
 
-            // 1. 分钟级降雨雷达 (纯粹展示)
+            // 1. 分钟级降雨雷达
             const radarCard = document.getElementById('radar-card');
             const radarText = document.getElementById('radar-text');
             if (minResult.status === 'fulfilled') {
@@ -510,7 +540,6 @@
                 });
                 document.getElementById('hourly-scroll-wrap').innerHTML = html;
 
-                // 默认选中第 1 个小时，显示当前详情
                 if (hourlyDataStore.length > 0) {
                     selectHourly(0);
                 }
@@ -528,7 +557,6 @@
                     const uvText = formatUV(item.uvIndex);
                     let rainText = '无雨', rainClass = 'rain-tag-none';
 
-                    // 国家标准24小时累积降雨量分级
                     if (precip >= 50.0) { 
                         rainClass = 'rain-tag-storm'; 
                         rainText = `暴雨 (${precip}mm)`; 
@@ -563,17 +591,14 @@
             timeTag.innerText = `数据同步时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
         }
 
-        // 初始化加载
         fetchData();
 
-        // 切回前台自动刷新
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 fetchData();
             }
         });
 
-        // 10 分钟自动静默刷新
         setInterval(fetchData, 10 * 60 * 1000);
     </script>
 </body>
