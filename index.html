@@ -440,11 +440,19 @@
                 if (item.text.includes('雨')) {
                     badgeEl.innerText = '微量雨丝';
                     badgeEl.className = 'detail-badge rain';
-                    explanation = `预计这 1 小时内仅有零星小雨点或微量雨丝，降雨量几乎为 0，户外短暂停留影响不大。`;
+                    explanation = `预计这 1 小时仅有零星雨丝或毛毛小雨点，几乎不形成积水，短时间在户外影响不大。`;
                 } else {
-                    badgeEl.innerText = '无降水';
+                    badgeEl.innerText = '无降水 · 天气良好';
                     badgeEl.className = 'detail-badge';
-                    explanation = `预计这 1 小时内无雨，地面干燥，降雨概率 ${pop}%。`;
+                    if (item.text.includes('晴')) {
+                        explanation = `预计这 1 小时晴空无雨，阳光充足，地面干燥。`;
+                    } else if (item.text.includes('多云')) {
+                        explanation = `预计这 1 小时天气多云无雨，云层遮阳，体感较舒适，地面干燥。`;
+                    } else if (item.text.includes('阴')) {
+                        explanation = `预计这 1 小时天色较阴但不会下雨，视线平稳，地面干燥。`;
+                    } else {
+                        explanation = `预计这 1 小时内没有降水，天气平稳，地面干燥。`;
+                    }
                 }
             } else if (precip < 0.5) {
                 badgeEl.innerText = `${precip}毫米 (毛毛雨)`;
