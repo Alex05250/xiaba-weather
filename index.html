@@ -126,7 +126,7 @@
             scroll-snap-type: x mandatory;
             display: flex;
             gap: 10px;
-            padding: 4px 2px 10px;
+            padding: 4px 2px 8px;
             margin: 0 -4px;
         }
         .hourly-scroll-wrap::-webkit-scrollbar {
@@ -140,7 +140,7 @@
             flex: 0 0 74px;
             scroll-snap-align: start;
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            border: 1.5px solid #e2e8f0;
             border-radius: 12px;
             padding: 10px 6px;
             display: flex;
@@ -149,10 +149,20 @@
             justify-content: space-between;
             text-align: center;
             min-height: 124px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .hourly-item:active {
+            transform: scale(0.96);
         }
         .hourly-item.is-rain {
             background: #f0f9ff;
-            border-color: #38bdf8;
+            border-color: #7dd3fc;
+        }
+        .hourly-item.selected {
+            border-color: #0284c7;
+            background: #e0f2fe;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
         }
         .hourly-time {
             font-size: 14px;
@@ -181,6 +191,50 @@
             font-weight: 800;
             color: #0f172a;
             margin-top: 4px;
+        }
+
+        /* 选中小时详细说明卡片 (Master-Detail) */
+        .hourly-detail-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-top: 12px;
+            border-left: 4px solid #0284c7;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .detail-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .detail-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .detail-badge {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .detail-badge.rain {
+            background: #bae6fd;
+            color: #0369a1;
+        }
+        .detail-desc {
+            font-size: 14.5px;
+            color: #334155;
+            font-weight: 600;
+            line-height: 1.5;
+            margin: 0;
         }
 
         /* 7天天气预报列表 */
@@ -259,14 +313,23 @@
         </div>
     </div>
 
-    <!-- 3. 24小时逐小时横向滑动预报 -->
+    <!-- 3. 24小时逐小时横向滑动预报 (带点击体感详解) -->
     <div class="card">
         <div class="card-header">
             <span>🕒 未来 24 小时预报</span>
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">👉 左右滑动查看</span>
+            <span style="font-size:12px; font-weight:bold; color:#0284c7;">👉 点卡片看雨量说明</span>
         </div>
         <div id="hourly-scroll-wrap" class="hourly-scroll-wrap">
             <div style="padding: 20px; color: #64748b;">正在加载小时预报...</div>
+        </div>
+        
+        <!-- 详细解释框 -->
+        <div id="hourly-detail-box" class="hourly-detail-box" style="display:none;">
+            <div class="detail-top-row">
+                <span id="detail-title" class="detail-title">--</span>
+                <span id="detail-badge" class="detail-badge">--</span>
+            </div>
+            <p id="detail-desc" class="detail-desc">--</p>
         </div>
     </div>
 
@@ -288,6 +351,8 @@
         const API_KEY = 'cc0137fcf6324152a477845dbe45b60d'; 
         const HOST = 'https://q45u9xuvxe.re.qweatherapi.com/v7';
 
+        let hourlyDataStore = [];
+
         async function fetchEndpoint(path) {
             const res = await fetch(`${HOST}${path}&location=${LOCATION}&key=${API_KEY}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -296,6 +361,7 @@
             return data;
         }
 
+        // 星期转换
         function getDayLabel(dateStr, index) {
             if (index === 0) return '今天';
             if (index === 1) return '明天';
@@ -305,11 +371,80 @@
             return days[date.getDay()] || dateStr.substring(5);
         }
 
+        // 紫外线指数转通俗中文
+        function formatUV(uvStr) {
+            const uv = parseInt(uvStr, 10);
+            if (isNaN(uv)) return uvStr ? `${uvStr}级` : '中等';
+            if (uv <= 2) return '弱';
+            if (uv <= 4) return '中等';
+            if (uv <= 6) return '较强';
+            if (uv <= 9) return '很强';
+            return '极强'; // 消除12级大风误导
+        }
+
+        // 点击胶囊展示雨量体感解释
+        function selectHourly(index) {
+            const item = hourlyDataStore[index];
+            if (!item) return;
+
+            // 切换选中高亮
+            document.querySelectorAll('.hourly-item').forEach((el, idx) => {
+                el.classList.toggle('selected', idx === index);
+            });
+
+            const timeStr = index === 0 ? '现在 (' + item.fxTime.substring(11, 16) + ')' : item.fxTime.substring(11, 16);
+            const precip = parseFloat(item.precip);
+            const pop = item.pop || '0';
+
+            const detailBox = document.getElementById('hourly-detail-box');
+            const titleEl = document.getElementById('detail-title');
+            const badgeEl = document.getElementById('detail-badge');
+            const descEl = document.getElementById('detail-desc');
+
+            detailBox.style.display = 'block';
+            titleEl.innerText = `${timeStr} · ${item.text} ${item.temp}°`;
+
+            let explanation = '';
+            if (precip === 0) {
+                if (item.text.includes('雨')) {
+                    badgeEl.innerText = '微量雨丝';
+                    badgeEl.className = 'detail-badge rain';
+                    explanation = `预计这 1 小时内仅有零星小雨点或微量雨丝，降雨量几乎为 0，户外短暂停留影响不大。`;
+                } else {
+                    badgeEl.innerText = '无降水';
+                    badgeEl.className = 'detail-badge';
+                    explanation = `预计这 1 小时内无雨，地面干燥，降雨概率 ${pop}%。`;
+                }
+            } else if (precip < 0.5) {
+                badgeEl.innerText = `${precip}毫米 (毛毛雨)`;
+                badgeEl.className = 'detail-badge rain';
+                explanation = `1小时降水 ${precip} 毫米：属于毛毛细雨，地面微湿，雨点很小，短时间在户外活动基本不受影响。`;
+            } else if (precip < 2.5) {
+                badgeEl.innerText = `${precip}毫米 (小雨)`;
+                badgeEl.className = 'detail-badge rain';
+                explanation = `1小时降水 ${precip} 毫米：属于明显小雨，地面会完全湿润并有浅积水，外出劳作建议撑伞或穿雨衣。`;
+            } else if (precip < 8.0) {
+                badgeEl.innerText = `${precip}毫米 (中雨)`;
+                badgeEl.className = 'detail-badge rain';
+                explanation = `1小时降水 ${precip} 毫米：属于中雨，雨声清晰、有明显积水，衣服会较快淋湿，田间道路容易泥泞。`;
+            } else if (precip < 15.0) {
+                badgeEl.innerText = `${precip}毫米 (大雨)`;
+                badgeEl.className = 'detail-badge rain';
+                explanation = `1小时降水 ${precip} 毫米：属于大雨，雨势较大、视线受限，室外劳作受阻，请在室内避雨。`;
+            } else {
+                badgeEl.innerText = `${precip}毫米 (短时强降雨)`;
+                badgeEl.className = 'detail-badge rain';
+                explanation = `1小时降水高达 ${precip} 毫米：属于短时强降雨/暴雨，雨势猛烈、极易积水，请务必注意防涝和安全防滑。`;
+            }
+
+            descEl.innerText = explanation;
+        }
+
         async function fetchData() {
             const timeTag = document.getElementById('update-time');
             timeTag.innerText = '正在同步最新气象数据...';
 
-            // 并发请求 4 个接口 (包括 7 天预报)
+            // 并发请求
             const [minResult, nowResult, hourlyResult, dailyResult] = await Promise.allSettled([
                 fetchEndpoint('/minutely/5m?'),
                 fetchEndpoint('/weather/now?'),
@@ -348,11 +483,11 @@
                 document.getElementById('now-temp').innerText = '获取失败';
             }
 
-            // 3. 24小时逐小时预报 (清晰展示：有雨标雨量，无雨保持干净)
+            // 3. 24小时逐小时预报
             if (hourlyResult.status === 'fulfilled') {
-                const hourly = hourlyResult.value.hourly || [];
+                hourlyDataStore = hourlyResult.value.hourly || [];
                 let html = '';
-                hourly.forEach((item, index) => {
+                hourlyDataStore.forEach((item, index) => {
                     const timeStr = index === 0 ? '现在' : item.fxTime.substring(11, 16);
                     const precip = parseFloat(item.precip);
                     const isRain = precip > 0 || item.text.includes('雨');
@@ -365,7 +500,7 @@
                     }
 
                     html += `
-                        <div class="hourly-item ${isRain ? 'is-rain' : ''}">
+                        <div class="hourly-item ${isRain ? 'is-rain' : ''}" onclick="selectHourly(${index})">
                             <span class="hourly-time">${timeStr}</span>
                             <span class="hourly-icon-text">${item.text}</span>
                             ${precipDisplay}
@@ -374,17 +509,23 @@
                     `;
                 });
                 document.getElementById('hourly-scroll-wrap').innerHTML = html;
+
+                // 默认选中第 1 个小时，显示当前详情
+                if (hourlyDataStore.length > 0) {
+                    selectHourly(0);
+                }
             } else {
                 document.getElementById('hourly-scroll-wrap').innerHTML = '<div style="padding:15px;color:#dc2626;">小时预报加载失败</div>';
             }
 
-            // 4. 未来 7 天预报 (国家标准降水定级)
+            // 4. 未来 7 天预报
             if (dailyResult.status === 'fulfilled') {
                 const daily = dailyResult.value.daily || [];
                 let html = '';
                 daily.forEach((item, idx) => {
                     const dayName = getDayLabel(item.fxDate, idx);
                     const precip = parseFloat(item.precip);
+                    const uvText = formatUV(item.uvIndex);
                     let rainText = '无雨', rainClass = 'rain-tag-none';
 
                     // 国家标准24小时累积降雨量分级
@@ -406,7 +547,7 @@
                         <div class="daily-row">
                             <div>
                                 <div class="daily-left-main">${dayName} · ${item.textDay}</div>
-                                <div class="daily-left-sub">气温 ${item.tempMin}° ~ ${item.tempMax}° · 紫外线 ${item.uvIndex}级</div>
+                                <div class="daily-left-sub">气温 ${item.tempMin}° ~ ${item.tempMax}° · 紫外线 ${uvText}</div>
                             </div>
                             <div class="daily-right ${rainClass}">
                                 ${rainText}
