@@ -2,131 +2,429 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>下坝村茄子基地 - 专属气象站</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 15px; }
-        h1 { font-size: 22px; text-align: center; color: #2c3e50; margin-bottom: 20px; }
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .alert { background: #ffebee; color: #c62828; border-left: 6px solid #c62828; }
-        .safe { background: #e8f5e9; color: #2e7d32; border-left: 6px solid #2e7d32; }
-        .big-text { font-size: 26px; font-weight: bold; margin: 10px 0; line-height: 1.4; }
-        .label { font-size: 15px; color: #7f8c8d; font-weight: bold; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-bottom: 8px; }
-        .hour-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 18px; align-items: center;}
-        .hour-row:last-child { border-bottom: none; }
-        .rain-heavy { color: #d35400; font-weight: bold; }
-        .rain-light { color: #2980b9; }
-        .daily-temp { font-size: 14px; color: #7f8c8d; display: block; margin-top: 4px; }
-        #update-time { text-align: center; font-size: 13px; color: #999; margin-top: 20px; margin-bottom: 40px;}
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            margin: 0;
+            padding: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 顶部导航 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 6px 2px 14px;
+        }
+        .header h1 {
+            font-size: 21px;
+            font-weight: 800;
+            margin: 0;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .refresh-btn {
+            background: #0284c7;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .refresh-btn:active { background: #0369a1; transform: scale(0.97); }
+
+        /* 卡片容器 */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.04);
+            border: 1px solid #e2e8f0;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: #334155;
+            border-bottom: 1.5px solid #f1f5f9;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        /* 雷达警报卡片 */
+        .alert-safe { background: #f0fdf4; border: 2px solid #22c55e; }
+        .alert-safe .radar-title { color: #166534; }
+        .alert-rain { background: #fef2f2; border: 2px solid #ef4444; }
+        .alert-rain .radar-title { color: #991b1b; }
+        .radar-summary {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 6px 0;
+            line-height: 1.35;
+        }
+        .agri-advice-tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        /* 实时天气 */
+        .temp-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin: 4px 0 8px;
+        }
+        .now-temp-num {
+            font-size: 38px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+        .now-weather-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0284c7;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 14px;
+            margin-top: 10px;
+            background: #f8fafc;
+            padding: 10px 12px;
+            border-radius: 10px;
+        }
+        .meta-item {
+            font-size: 15px;
+            color: #475569;
+            font-weight: 600;
+        }
+        .meta-item b { color: #0f172a; }
+
+        /* 苹果天气风格横向滑动卡片 */
+        .hourly-scroll-wrap {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            display: flex;
+            gap: 10px;
+            padding: 4px 2px 10px;
+            margin: 0 -4px;
+        }
+        .hourly-scroll-wrap::-webkit-scrollbar {
+            height: 4px;
+        }
+        .hourly-scroll-wrap::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .hourly-item {
+            flex: 0 0 74px;
+            scroll-snap-align: start;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            min-height: 130px;
+        }
+        .hourly-item.is-rain {
+            background: #f0f9ff;
+            border-color: #38bdf8;
+        }
+        .hourly-time {
+            font-size: 14px;
+            font-weight: 700;
+            color: #64748b;
+        }
+        .hourly-icon-text {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 4px 0;
+        }
+        .hourly-pop {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0284c7;
+            height: 18px;
+            line-height: 18px;
+        }
+        .hourly-temp {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 4px;
+        }
+
+        /* 3天天气预报 */
+        .daily-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .daily-row:last-child { border-bottom: none; }
+        .daily-left-main {
+            font-size: 17px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .daily-left-sub {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .daily-right {
+            text-align: right;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .rain-tag-heavy { color: #dc2626; }
+        .rain-tag-mid { color: #ea580c; }
+        .rain-tag-light { color: #0284c7; }
+        .rain-tag-none { color: #94a3b8; font-weight: 600; }
+
+        /* 底部状态栏 */
+        #update-time {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            margin: 16px 0 28px;
+        }
     </style>
 </head>
 <body>
-    <h1>🍆 下坝村茄子基地 - 气象站</h1>
-    
+
+    <div class="header">
+        <h1>🍆 下坝村气象站</h1>
+        <button class="refresh-btn" onclick="fetchData()">🔄 刷新</button>
+    </div>
+
+    <!-- 1. 未来两小时降雨雷达 -->
     <div id="radar-card" class="card">
-        <div class="label">未来两小时降雨雷达</div>
-        <div id="radar-text" class="big-text">数据加载中...</div>
+        <div class="card-header">
+            <span class="radar-title">⚡ 未来 2 小时降雨雷达</span>
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">5分钟级更新</span>
+        </div>
+        <div id="radar-text" class="radar-summary">正在获取雷达回波...</div>
+        <div id="agri-advice" class="agri-advice-tag" style="display:none;"></div>
     </div>
 
+    <!-- 2. 地里实时天气 -->
     <div class="card">
-        <div class="label">地里现在的实况</div>
-        <div id="now-temp" class="big-text">--℃</div>
-        <div id="now-desc">湿度: --% | 能见度: --公里</div>
+        <div class="card-header">
+            <span>🌡️ 地里当前实况</span>
+            <span id="now-wind-badge" style="color:#0284c7; font-weight:800;">--</span>
+        </div>
+        <div class="temp-row">
+            <span id="now-temp" class="now-temp-num">--°</span>
+            <span id="now-text" class="now-weather-text">--</span>
+        </div>
+        <div class="meta-grid">
+            <div class="meta-item">体感温度: <b id="now-feels">--℃</b></div>
+            <div class="meta-item">相对湿度: <b id="now-humidity">--%</b></div>
+            <div class="meta-item">风向风速: <b id="now-wind-detail">--</b></div>
+            <div class="meta-item">气压指数: <b id="now-pressure">--hPa</b></div>
+        </div>
     </div>
 
+    <!-- 3. 24小时逐小时横向滑动预报 (苹果天气风格) -->
     <div class="card">
-        <div class="label">未来三天概况 (今天、明天、后天)</div>
-        <div id="daily-list">加载中...</div>
+        <div class="card-header">
+            <span>🕒 未来 24 小时预报</span>
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">👉 左右滑动查看</span>
+        </div>
+        <div id="hourly-scroll-wrap" class="hourly-scroll-wrap">
+            <div style="padding: 20px; color: #64748b;">正在加载小时预报...</div>
+        </div>
     </div>
 
+    <!-- 4. 未来三天天气 -->
     <div class="card">
-        <div class="label">全天几点会下雨？(未来24小时)</div>
-        <div id="hourly-list">加载中...</div>
+        <div class="card-header">
+            <span>📅 未来 3 天预报</span>
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">今天·明天·后天</span>
+        </div>
+        <div id="daily-list">
+            <div style="padding: 10px; color: #64748b;">正在加载3天预报...</div>
+        </div>
     </div>
 
-    <div id="update-time"></div>
+    <div id="update-time">正在连接气象数据...</div>
 
     <script>
         const LOCATION = '99.0280,23.5335'; 
-        const API_KEY='cc0137fcf6324152a477845dbe45b60d'; 
+        const API_KEY = 'cc0137fcf6324152a477845dbe45b60d'; 
         const HOST = 'https://q45u9xuvxe.re.qweatherapi.com/v7';
 
-        async function fetchData() {
-            try {
-                const minRes = await fetch(`${HOST}/minutely/5m?location=${LOCATION}&key=${API_KEY}`);
-                const minData = await minRes.json();
-                const radarCard = document.getElementById('radar-card');
-                const radarText = document.getElementById('radar-text');
-                if (minData.code === '200') {
-                    radarText.innerText = minData.summary;
-                    if (minData.summary.includes('无降水') || minData.summary.includes('不会下雨')) {
-                        radarCard.className = 'card safe';
-                    } else {
-                        radarCard.className = 'card alert';
-                    }
-                }
-
-                const nowRes = await fetch(`${HOST}/weather/now?location=${LOCATION}&key=${API_KEY}`);
-                const nowData = await nowRes.json();
-                if (nowData.code === '200') {
-                    document.getElementById('now-temp').innerText = `${nowData.now.temp}℃ (${nowData.now.text})`;
-                    document.getElementById('now-desc').innerText = `相对湿度: ${nowData.now.humidity}% | 能见度: ${nowData.now.vis}公里`;
-                }
-
-                const dailyRes = await fetch(`${HOST}/weather/3d?location=${LOCATION}&key=${API_KEY}`);
-                const dailyData = await dailyRes.json();
-                if (dailyData.code === '200') {
-                    let dailyHtml = '';
-                    const dayNames = ['今天', '明天', '后天'];
-                    dailyData.daily.forEach((item, index) => {
-                        const dateName = dayNames[index] || item.fxDate.substring(5);
-                        const precip = parseFloat(item.precip);
-                        let rainClass = '';
-                        let rainText = '无雨';
-                        if (precip > 10.0) { rainClass = 'rain-heavy'; rainText = `暴/大雨 (${precip}mm)`; }
-                        else if (precip > 0) { rainClass = 'rain-light'; rainText = `小雨 (${precip}mm)`; }
-                        
-                        dailyHtml += `
-                            <div class="hour-row ${rainClass}">
-                                <div>
-                                    <span>${dateName}</span>
-                                    <span class="daily-temp">${item.textDay} | ${item.tempMin}~${item.tempMax}℃</span>
-                                </div>
-                                <span>${rainText}</span>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('daily-list').innerHTML = dailyHtml;
-                }
-
-                const hrRes = await fetch(`${HOST}/weather/24h?location=${LOCATION}&key=${API_KEY}`);
-                const hrData = await hrRes.json();
-                if (hrData.code === '200') {
-                    let html = '';
-                    hrData.hourly.slice(0, 24).forEach(item => {
-                        const time = item.fxTime.substring(11, 16);
-                        const precip = parseFloat(item.precip);
-                        let rainClass = '';
-                        let rainText = '无雨';
-                        if (precip > 2.0) { rainClass = 'rain-heavy'; rainText = `${precip}毫米 (大雨)`; }
-                        else if (precip > 0) { rainClass = 'rain-light'; rainText = `${precip}毫米 (小雨)`; }
-                        
-                        html += `
-                            <div class="hour-row ${rainClass}">
-                                <span>${time} ${item.text}</span>
-                                <span>${rainText}</span>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('hourly-list').innerHTML = html;
-                }
-
-                document.getElementById('update-time').innerText = `数据同步时间: ${new Date().toLocaleTimeString()}`;
-            } catch (error) {
-                document.getElementById('radar-text').innerText = "数据获取失败，请检查网络";
-            }
+        async function fetchEndpoint(path) {
+            const res = await fetch(`${HOST}${path}&location=${LOCATION}&key=${API_KEY}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (data.code !== '200') throw new Error(`API Code ${data.code}`);
+            return data;
         }
+
+        async function fetchData() {
+            const timeTag = document.getElementById('update-time');
+            timeTag.innerText = '正在同步最新气象数据...';
+
+            // 并发请求
+            const [minResult, nowResult, hourlyResult, dailyResult] = await Promise.allSettled([
+                fetchEndpoint('/minutely/5m?'),
+                fetchEndpoint('/weather/now?'),
+                fetchEndpoint('/weather/24h?'),
+                fetchEndpoint('/weather/3d?')
+            ]);
+
+            // 1. 分钟级降雨雷达
+            const radarCard = document.getElementById('radar-card');
+            const radarText = document.getElementById('radar-text');
+            const agriAdvice = document.getElementById('agri-advice');
+            if (minResult.status === 'fulfilled') {
+                const d = minResult.value;
+                radarText.innerText = d.summary || '暂无降水描述';
+                
+                // 判断未来2小时是否有雨
+                const willRain = d.minutely && d.minutely.some(item => parseFloat(item.precip) > 0.02);
+                agriAdvice.style.display = 'inline-block';
+
+                if (!willRain || d.summary.includes('无降水') || d.summary.includes('无雨') || d.summary.includes('不会下雨')) {
+                    radarCard.className = 'card alert-safe';
+                    agriAdvice.innerText = '✅ 近 2 小时无降雨，适宜采摘/喷药/田间农事';
+                    agriAdvice.style.background = '#dcfce7';
+                    agriAdvice.style.color = '#15803d';
+                } else {
+                    radarCard.className = 'card alert-rain';
+                    agriAdvice.innerText = '⚠️ 近 2 小时预计有降雨，请注意防雨防滑、暂缓喷药';
+                    agriAdvice.style.background = '#fee2e2';
+                    agriAdvice.style.color = '#991b1b';
+                }
+            } else {
+                radarText.innerText = '短临雷达数据暂时不可用';
+                agriAdvice.style.display = 'none';
+            }
+
+            // 2. 地里实时天气
+            if (nowResult.status === 'fulfilled') {
+                const now = nowResult.value.now;
+                document.getElementById('now-temp').innerText = `${now.temp}°`;
+                document.getElementById('now-text').innerText = now.text;
+                document.getElementById('now-wind-badge').innerText = `${now.windDir} ${now.windScale}级`;
+                document.getElementById('now-feels').innerText = `${now.feelsLike}℃`;
+                document.getElementById('now-humidity').innerText = `${now.humidity}%`;
+                document.getElementById('now-wind-detail').innerText = `${now.windScale}级 (${now.windSpeed}km/h)`;
+                document.getElementById('now-pressure').innerText = `${now.pressure}hPa`;
+            } else {
+                document.getElementById('now-temp').innerText = '获取失败';
+            }
+
+            // 3. 24小时逐小时横向滑动预报 (苹果天气风格)
+            if (hourlyResult.status === 'fulfilled') {
+                const hourly = hourlyResult.value.hourly || [];
+                let html = '';
+                hourly.forEach((item, index) => {
+                    const timeStr = index === 0 ? '现在' : item.fxTime.substring(11, 16);
+                    const precip = parseFloat(item.precip);
+                    const pop = parseInt(item.pop || '0', 10);
+                    const isRain = precip > 0 || item.text.includes('雨');
+
+                    let popDisplay = '';
+                    if (pop > 0 || precip > 0) {
+                        popDisplay = precip > 0 ? `${precip}mm` : `${pop}%`;
+                    }
+
+                    html += `
+                        <div class="hourly-item ${isRain ? 'is-rain' : ''}">
+                            <span class="hourly-time">${timeStr}</span>
+                            <span class="hourly-icon-text">${item.text}</span>
+                            <span class="hourly-pop">${popDisplay}</span>
+                            <span class="hourly-temp">${item.temp}°</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('hourly-scroll-wrap').innerHTML = html;
+            } else {
+                document.getElementById('hourly-scroll-wrap').innerHTML = '<div style="padding:15px;color:#dc2626;">小时预报加载失败</div>';
+            }
+
+            // 4. 未来三天预报
+            if (dailyResult.status === 'fulfilled') {
+                const daily = dailyResult.value.daily || [];
+                const dayLabels = ['今天', '明天', '后天'];
+                let html = '';
+                daily.forEach((item, idx) => {
+                    const title = dayLabels[idx] || item.fxDate.substring(5);
+                    const precip = parseFloat(item.precip);
+                    let rainText = '无雨', rainClass = 'rain-tag-none';
+
+                    if (precip >= 25.0) { rainClass = 'rain-tag-heavy'; rainText = `大/暴雨 (${precip}mm)`; }
+                    else if (precip >= 10.0) { rainClass = 'rain-tag-mid'; rainText = `中雨 (${precip}mm)`; }
+                    else if (precip > 0) { rainClass = 'rain-tag-light'; rainText = `小雨 (${precip}mm)`; }
+
+                    html += `
+                        <div class="daily-row">
+                            <div>
+                                <div class="daily-left-main">${title} · ${item.textDay}</div>
+                                <div class="daily-left-sub">气温 ${item.tempMin}° ~ ${item.tempMax}° · 紫外线 ${item.uvIndex}级</div>
+                            </div>
+                            <div class="daily-right ${rainClass}">
+                                ${rainText}
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('daily-list').innerHTML = html;
+            } else {
+                document.getElementById('daily-list').innerHTML = '<div style="padding:10px;color:#dc2626;">三天预报加载失败</div>';
+            }
+
+            timeTag.innerText = `数据同步时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
+        }
+
+        // 初始化加载
         fetchData();
+
+        // 切回前台自动刷新
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                fetchData();
+            }
+        });
+
+        // 10 分钟自动静默刷新
+        setInterval(fetchData, 10 * 60 * 1000);
     </script>
 </body>
 </html>
