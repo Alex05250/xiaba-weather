@@ -435,7 +435,7 @@
                 el.classList.toggle('selected', idx === index);
             });
 
-            const timeStr = index === 0 ? '现在 (' + formatFxTime(item.fxTime) + ')' : formatFxTime(item.fxTime);
+            const timeStr = formatFxTime(item.fxTime);
             const precip = parseFloat(item.precip);
             const pop = item.pop || '0';
 
@@ -538,7 +538,7 @@
                 hourlyDataStore = hourlyResult.value.hourly || [];
                 let html = '';
                 hourlyDataStore.forEach((item, index) => {
-                    const timeStr = index === 0 ? '现在' : formatFxTime(item.fxTime);
+                    const timeStr = formatFxTime(item.fxTime);
                     const precip = parseFloat(item.precip);
                     const isRain = precip > 0 || item.text.includes('雨');
 
