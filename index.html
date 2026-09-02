@@ -392,6 +392,18 @@
             return data;
         }
 
+        // 格式化逐小时预报时间（兼容 UTC 与本地 ISO 格式）
+        function formatFxTime(fxTimeStr) {
+            if (!fxTimeStr) return '--:--';
+            const date = new Date(fxTimeStr);
+            if (isNaN(date.getTime())) {
+                return fxTimeStr.substring(11, 16);
+            }
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
         // 星期转换
         function getDayLabel(dateStr, index) {
             if (index === 0) return '今天';
@@ -423,7 +435,7 @@
                 el.classList.toggle('selected', idx === index);
             });
 
-            const timeStr = index === 0 ? '现在 (' + item.fxTime.substring(11, 16) + ')' : item.fxTime.substring(11, 16);
+            const timeStr = index === 0 ? '现在 (' + formatFxTime(item.fxTime) + ')' : formatFxTime(item.fxTime);
             const precip = parseFloat(item.precip);
             const pop = item.pop || '0';
 
@@ -485,8 +497,8 @@
 
             const [minResult, nowResult, hourlyResult, dailyResult] = await Promise.allSettled([
                 fetchEndpoint('/minutely/5m?'),
-                fetchEndpoint('/weather/now?'),
-                fetchEndpoint('/weather/24h?'),
+                fetchEndpoint('/grid-weather/now?'),
+                fetchEndpoint('/grid-weather/24h?'),
                 fetchEndpoint('/weather/7d?')
             ]);
 
@@ -526,7 +538,7 @@
                 hourlyDataStore = hourlyResult.value.hourly || [];
                 let html = '';
                 hourlyDataStore.forEach((item, index) => {
-                    const timeStr = index === 0 ? '现在' : item.fxTime.substring(11, 16);
+                    const timeStr = index === 0 ? '现在' : formatFxTime(item.fxTime);
                     const precip = parseFloat(item.precip);
                     const isRain = precip > 0 || item.text.includes('雨');
 
